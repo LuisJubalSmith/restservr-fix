@@ -13,6 +13,8 @@ app.use(
 );
 // parse application/json
 app.use(bodyParser.json());
+
+// asseso de multiples tipos de header
 app.use(function(req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader(
@@ -27,7 +29,8 @@ app.use(function(req, res, next) {
     next();
 });
 
-app.use(require('./routes/usuario'));
+// configuracion global de routas
+app.use(require('./routes/index'));
 
 mongoose.connect(
     process.env.URLDB, {

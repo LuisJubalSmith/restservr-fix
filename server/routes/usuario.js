@@ -2,16 +2,29 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const _ = require('underscore');
 const Usuario = require('../models/usuario');
+const {
+    verificaToken,
+    verificaAdmin_Role
+} = require('../middlewares/autenticacion');
 const app = express();
 
-app.get('/usuario', function(req, res) {
+app.get('/usuario', verificaToken, (req, res) => {
     // res.json('get usuario Local!!!!');
+    // return res.json({
+    //     usuario: req.usuario,
+    //     nombre: req.usuario.nombre,
+    //     email: req.usuario.email
+    // })
+
+
     let desde = req.query.desde || 0;
     desde = Number(desde);
-    let limite = req.query.limite || 5;
+    let limite = req.query.limite || 15;
     limite = Number(limite);
 
-    Usuario.find({ estado: true }, 'nombre email role estado google img')
+    Usuario.find({
+            estado: true
+        }, 'nombre email role estado google img')
         .skip(desde)
         .limit(limite)
         .exec((err, usuarios) => {
@@ -22,7 +35,9 @@ app.get('/usuario', function(req, res) {
                 });
             }
 
-            Usuario.count({ estado: true }, (err, conteo) => {
+            Usuario.count({
+                estado: true
+            }, (err, conteo) => {
                 res.json({
                     ok: true,
                     usuarios,
@@ -37,7 +52,7 @@ app.get('/usuario', function(req, res) {
         });
 });
 
-app.post('/usuario', function(req, res) {
+app.post('/usuario', [verificaToken, verificaAdmin_Role], (req, res) => {
     let body = req.body;
 
     let usuario = new Usuario({
@@ -64,14 +79,17 @@ app.post('/usuario', function(req, res) {
     });
 });
 
-app.put('/usuario/:id', function(req, res) {
+app.put('/usuario/:id', [verificaToken, verificaAdmin_Role], (req, res) => {
     let id = req.params.id;
     let body = _.pick(req.body, ['nombre', 'email', 'img', 'role', 'estado']);
 
     // actualizar con findByIdAndUpdate: el findById busco por el id en la base de datos y con el AndUpdate actualiza los datos.
     Usuario.findByIdAndUpdate(
         id,
-        body, { new: true, runValidators: true },
+        body, {
+            new: true,
+            runValidators: true
+        },
         (err, usuarioDB) => {
             if (err) {
                 return res.status(400).json({
@@ -88,7 +106,7 @@ app.put('/usuario/:id', function(req, res) {
     );
 });
 
-app.delete('/usuario/:id', function(req, res) {
+app.delete('/usuario/:id', [verificaToken, verificaAdmin_Role], (req, res) => {
     // res.json('delete usuario');
     let id = req.params.id;
     // Usuario.findByIdAndRemove(id, (err, usuarioBorrado) => {
@@ -97,7 +115,9 @@ app.delete('/usuario/:id', function(req, res) {
     };
     Usuario.findByIdAndUpdate(
         id,
-        cambiaEstado, { new: true },
+        cambiaEstado, {
+            new: true
+        },
         (err, usuarioBorrado) => {
             if (err) {
                 return res.status(400).json({
